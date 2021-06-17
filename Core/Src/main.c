@@ -23,15 +23,19 @@
 #include "dma.h"
 #include "hrtim.h"
 #include "hrtim.h"
+#include "iwdg.h"
 #include "tim.h"
 #include "usart.h"
+#include "wwdg.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 #include "Application_Conf.h"
 #include "DPC_Timeout.h"
 #include "ControlFunc.h"
+#include "PWM_Functions.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +45,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define LoWord(param) ((unsigned *)&param)[0]
+#define HiWord(param) ((unsigned *)&param)[1]
+
+#define Lowest(param) ((uint8_t *)&param)[0]
+#define Lo(param) 	  ((uint8_t *)&param)[1]
+#define Hi(param) 	  ((uint8_t *)&param)[2]
+#define Highest(param)((uint8_t *)&param)[3]
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,6 +66,9 @@ PID_Control_Struct PID_CONF_StartUp;
 
 PID_Control_Struct UDC_LIMIT_PID;
 PID_Control_Struct IDC_LIMIT_PID;
+
+static DMA_PWMDUTY_STRUCT DMA_HRTIM_SRC;
+static DMA_UART_STRUCT DMA_UART_SRC;
 
 extern RAW_ADC_Struct Raw_ADC;
 extern RAW_ADC_Struct Raw_DMA;
@@ -110,6 +124,8 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM5_Init();
   MX_USART1_UART_Init();
+  MX_IWDG_Init();
+  MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -120,6 +136,7 @@ int main(void)
   PID_Init(&IDC_LIMIT_PID, I_LIM_PID_K_P,I_LIM_PID_K_I,I_LIM_PID_K_D, BUCK_Math_Frequency, I_LIM_PID_W_F, I_LIM_PID_SAT_UP,
 		  I_LIM_PID_SAT_DOWN, I_LIM_PID_HIST, I_LIM_PID_ANTIWINDUP, I_LIM_PID_BASE_VAL);
 
+  HRTIM_PWM_Init(&DMA_HRTIM_SRC);
 
   /* USER CODE END 2 */
 
@@ -130,6 +147,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	 HAL_UART_Transmit_DMA(&huart1, &DMA_UART_SRC.Transmit[0], UART_PACKAGE_SIZE);
+	 HAL_UART_Receive_DMA(&huart1, &DMA_UART_SRC.Received[0], UART_PACKAGE_SIZE);
   }
   /* USER CODE END 3 */
 }
@@ -150,8 +169,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV2;
@@ -188,7 +208,19 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if (huart->Instance == USART1 ){
 
+	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Instance == TIM2)
+	{
+
+	}
+}
 /* USER CODE END 4 */
 
 /**

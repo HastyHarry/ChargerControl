@@ -5,16 +5,6 @@
   * @brief          : Header for main.c file.
   *                   This file contains the common defines of the application.
   ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
   ******************************************************************************
   */
 /* USER CODE END Header */
@@ -37,7 +27,26 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct
+{
+	uint32_t chA1;
+	uint32_t chA2;
+	uint32_t chB1;
+	uint32_t chB2;
+	uint32_t chC1;
+	uint32_t chC2;
+	uint32_t chD1;
+	uint32_t chD2;
+	uint32_t chE1;
+	uint32_t chE2;
+} DMA_PWMDUTY_STRUCT;
 
+typedef struct
+{
+	uint8_t Received[30];
+	uint8_t Transmit[30];
+
+} DMA_UART_STRUCT;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

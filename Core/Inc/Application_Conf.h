@@ -88,4 +88,7 @@
 #define B_IDC                           0                                           /*!< Bias terms of the DC current sensing */
 
 
+//UART Settings
+#define UART_PACKAGE_SIZE				20
+
 #endif //__BUCK_APPLICATION_CONF_H
