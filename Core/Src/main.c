@@ -73,6 +73,8 @@ static DMA_UART_STRUCT DMA_UART_SRC;
 extern RAW_ADC_Struct Raw_ADC;
 extern RAW_ADC_Struct Raw_DMA;
 
+volatile FlagStatus Calc_Start;
+FlagStatus DMA_FLAG;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -136,6 +138,8 @@ int main(void)
   PID_Init(&IDC_LIMIT_PID, I_LIM_PID_K_P,I_LIM_PID_K_I,I_LIM_PID_K_D, BUCK_Math_Frequency, I_LIM_PID_W_F, I_LIM_PID_SAT_UP,
 		  I_LIM_PID_SAT_DOWN, I_LIM_PID_HIST, I_LIM_PID_ANTIWINDUP, I_LIM_PID_BASE_VAL);
 
+  //HAL_ADC_Start_DMA(&hadc1, uint32_t* pData, uint32_t Length);
+
   HRTIM_PWM_Init(&DMA_HRTIM_SRC);
 
   /* USER CODE END 2 */
@@ -149,6 +153,58 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	 HAL_UART_Transmit_DMA(&huart1, &DMA_UART_SRC.Transmit[0], UART_PACKAGE_SIZE);
 	 HAL_UART_Receive_DMA(&huart1, &DMA_UART_SRC.Received[0], UART_PACKAGE_SIZE);
+
+
+	  if(Calc_Start==SET){
+		  DATA_Processing();
+		  ADC_MA_VAL_Collection();
+		  ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
+		  ADC2Phy_IDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
+
+		  	if (((float)VDC_ADC_IN_PHY.Vdc) > BUCK_VDC_REF_LOW_REF){
+		  		StartUp=1;
+		  	}
+		  	else if (((float)VDC_ADC_IN_PHY.Vdc) < 20){
+		  		StartUp=0;
+		  		PID_CONF_StartUp.resetPI=SET;
+		  	};
+
+			if (StartUp==0){
+				Voltage_PID_CONF.resetPI = SET;
+				Current_PID_CONF.resetPI = SET;
+				UDC_LIMIT_PID.resetPI = SET;
+				IDC_LIMIT_PID.resetPI = SET;
+				PID_Result_V = PID_Control(BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, &PID_CONF_StartUp);
+				PWM = PID_Result_V/BUCK_VAC_REF;
+				IDC_LIMIT_PID.resetPI = SET;
+				UDC_LIMIT_PID.resetPI = SET;
+			}
+			else if (StartUp==1){
+				Voltage_PID_CONF.Antiwindup_Switch = SET;
+				Current_PID_CONF.Antiwindup_Switch = RESET;
+				//PID_Result_V = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, (float)(VDC_ADC_IN_PHY.Vdc/* - PID_Result*/), VDC_ADC_IN_PHY.Idc);
+				PID_Result_V = PID_Control(BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, &UDC_LIMIT_PID);
+				PID_Result_I = Current_Control(BUCK_IDC_LIM, VDC_ADC_IN_PHY.Idc, &IDC_LIMIT_PID);
+
+				if (PID_Result_V<=PID_Result_I){
+					PWM = PID_Result_V/BUCK_VAC_REF;
+				}
+				else if (PID_Result_V>PID_Result_I){
+					PWM = PID_Result_I/BUCK_VAC_REF;
+					//UDC_LIMIT_PID.resetPI = SET;
+				}
+				PID_CONF_StartUp.resetPI = SET;
+			}
+			//BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
+
+			if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
+				HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
+			}
+			else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
+				HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+			}
+			Calc_Start = RESET;
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -218,7 +274,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == TIM2)
 	{
-
+		Calc_Start = SET;
+		DMA_FLAG = SET;
 	}
 }
 /* USER CODE END 4 */
