@@ -43,8 +43,9 @@ FlagStatus resetComplete;
 typedef struct{
   uint32_t Vdc[ADC1_MA_PERIOD_VDC];
   uint32_t Vac[ADC1_MA_PERIOD_VDC];
-  uint32_t Idc[ADC1_MA_PERIOD_VDC];
-  uint32_t MA_Counter;
+  uint32_t Idc[ADC1_MA_PERIOD_IDC];
+  uint32_t VDC_MA_Counter;
+  uint32_t IDC_MA_Counter;
   float Vdc_MA;
   float Vac_MA;
   float Idc_MA;
@@ -87,8 +88,16 @@ typedef struct{
 	uint32_t OC1;
 }BUCK_OC_Source_Struct;
 
+
+void ADC_Gain_Init(ADC_Conf_TypeDef *BUCK_ADC_Conf,float G_Vac,float B_Vac,float G_Iac,float B_Iac,float G_Vdc,float B_Vdc,float G_Idc,float B_Idc);
 void PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down,
 				float Hist, float Antiwindup, float Base_Value);
 float PID(float Ref, float Feed, PID_Control_Struct* Conf_struct);
+void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values);
+void ADC2Phy_IDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values);
+RAW_ADC_Struct* Read_Volt_DC(void);
+void DATA_Processing();
+void ADC_MA_VAL_Collection();
+void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data);
 
 #endif //__BUCK_CTRL_H
