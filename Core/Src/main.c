@@ -82,6 +82,7 @@ float PID_Result_V;
 float PID_Result_I;
 float PWM;
 uint32_t p_ADC1_Data[ADC1_CHs];
+uint32_t p_ADC2_Data[ADC2_CHs];
 
 volatile FlagStatus Calc_Start;
 FlagStatus DMA_FLAG;
@@ -152,6 +153,7 @@ int main(void)
 
   //HAL_ADC_Start_DMA(&hadc1, uint32_t* pData, uint32_t Length);
   HAL_ADC_Start_DMA(&hadc1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+  HAL_ADC_Start_DMA(&hadc2, p_ADC2_Data, ADC2_MA_PERIOD_RAW*ADC2_CHs);
 
   //HRTIM_PWM_Init(&DMA_HRTIM_SRC);
 
@@ -365,6 +367,9 @@ void HAL_HRTIM_Fault4Callback(HRTIM_HandleTypeDef *hhrtim){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	if (hadc->Instance == ADC1){
+		DATA_Acquisition_from_DMA(p_ADC1_Data);
+	}
+	else if (hadc->Instance == ADC1){
 		DATA_Acquisition_from_DMA(p_ADC1_Data);
 	}
 }
