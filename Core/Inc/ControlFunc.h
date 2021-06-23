@@ -42,8 +42,10 @@ FlagStatus resetComplete;
 
 typedef struct{
   uint32_t Vdc[ADC1_MA_PERIOD_VDC];
-  uint32_t Vac[ADC1_MA_PERIOD_VDC];
   uint32_t Idc[ADC1_MA_PERIOD_IDC];
+  uint32_t Vrect[ADC2_MA_PERIOD_VDCRECT];
+  uint32_t Idclink[ADC2_MA_PERIOD_IDCLINK];
+  uint32_t Vdclink[ADC2_MA_PERIOD_VDCLINK];
   uint32_t VDC_MA_Counter;
   uint32_t IDC_MA_Counter;
   float Vdc_MA;
@@ -53,7 +55,8 @@ typedef struct{
   float Vac_MA_prev;
   float Idc_MA_prev;
 
-  FlagStatus Ready;
+  FlagStatus Ready1;
+  FlagStatus Ready2;
 }RAW_ADC_Struct;
 
 
@@ -98,6 +101,6 @@ void ADC2Phy_IDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_
 RAW_ADC_Struct* Read_Volt_DC(void);
 void DATA_Processing();
 void ADC_MA_VAL_Collection();
-void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data);
+void DATA_Acquisition_from_DMA(uint32_t* p_ADC_Data, uint32_t ADC_Type);
 
 #endif //__BUCK_CTRL_H

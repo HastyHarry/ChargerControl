@@ -367,10 +367,10 @@ void HAL_HRTIM_Fault4Callback(HRTIM_HandleTypeDef *hhrtim){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	if (hadc->Instance == ADC1){
-		DATA_Acquisition_from_DMA(p_ADC1_Data);
+		DATA_Acquisition_from_DMA(p_ADC1_Data,1);
 	}
-	else if (hadc->Instance == ADC1){
-		DATA_Acquisition_from_DMA(p_ADC1_Data);
+	else if (hadc->Instance == ADC2){
+		DATA_Acquisition_from_DMA(p_ADC2_Data,2);
 	}
 }
 
